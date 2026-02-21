@@ -1,0 +1,22 @@
+[project]
+name = "engineering-orchestrator"
+version = "0.1.0"
+description = "Multi-agent orchestrator that helps engineers through the software development lifecycle"
+requires-python = ">=3.11"
+dependencies = [
+    "langgraph>=0.2.0",
+    "langchain-openai>=0.2.0",
+    "langchain-core>=0.3.0",
+    "python-dotenv>=1.0.0",
+]
+
+[project.scripts]
+orchestrator = "main:main"
+
+[build-system]
+requires = ["setuptools>=68.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["src*"]

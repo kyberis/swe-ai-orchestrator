@@ -1,0 +1,28 @@
+# Environment & secrets
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+*.egg
+
+# Generated projects (users create these locally)
+projects/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# Old output directory
+output/
+
+# Node (in case any appear at root)
+node_modules/
