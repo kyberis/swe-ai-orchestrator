@@ -117,6 +117,30 @@ def _choose_project_mode() -> tuple[str, Path | None]:
         print(f"Please enter a number between 1 and {len(existing)}.")
 
 
+def _summarize_text(text: str, max_lines: int = 10) -> str:
+    """Extract the first meaningful lines from a document for a compact preview."""
+    lines = []
+    for line in text.splitlines():
+        stripped = line.strip()
+        if not stripped:
+            continue
+        if stripped.startswith("```"):
+            continue
+        if stripped.startswith("#"):
+            lines.append(stripped)
+        elif stripped.startswith("-") or stripped.startswith("*") or stripped.startswith("|"):
+            lines.append(stripped)
+        elif any(stripped.startswith(f"{i}.") for i in range(1, 20)):
+            lines.append(stripped)
+        else:
+            lines.append(stripped)
+        if len(lines) >= max_lines:
+            break
+    if len(text.splitlines()) > max_lines:
+        lines.append(f"  ... ({len(text.splitlines())} lines total — press [v] to view full)")
+    return "\n".join(lines)
+
+
 def _run_until_interrupt(graph, config: dict, inputs: dict | None) -> dict | None:
     """Stream graph execution until an interrupt or completion.
 
@@ -230,32 +254,32 @@ def main() -> None:
         interrupted_at = state.next
         snapshot = state.values if hasattr(state, "values") else {}
 
-        print(f"\n{'=' * 60}")
-        print(f"⏸  Orchestrator paused before: {interrupted_at}")
-        print(f"{'=' * 60}")
-
         requirements = snapshot.get("requirements", "")
         system_design = snapshot.get("system_design", "")
 
+        print(f"\n{'=' * 60}")
+        print(f"⏸  Paused before coding — review the design")
+        print(f"{'=' * 60}")
+
         if requirements:
-            print(f"\n┌{'─' * 58}┐")
-            print(f"│ {'REQUIREMENTS':^56} │")
-            print(f"└{'─' * 58}┘")
-            print(requirements)
+            summary = _summarize_text(requirements, max_lines=8)
+            print(f"\n  REQUIREMENTS (summary):")
+            for line in summary.splitlines():
+                print(f"    {line}")
 
         if system_design:
-            print(f"\n┌{'─' * 58}┐")
-            print(f"│ {'SYSTEM DESIGN (ERD)':^56} │")
-            print(f"└{'─' * 58}┘")
-            print(system_design)
+            summary = _summarize_text(system_design, max_lines=12)
+            print(f"\n  SYSTEM DESIGN (summary):")
+            for line in summary.splitlines():
+                print(f"    {line}")
 
         if not requirements and not system_design:
             print("\n  (No design artifacts produced yet.)")
 
         print(f"\n{'─' * 60}")
-        print("Review the design above. You can:")
         print("  [c] Continue to coding")
         print("  [f] Provide feedback (re-runs design with your notes)")
+        print("  [v] View full design")
         print("  [q] Quit")
         print(f"{'─' * 60}")
 
@@ -264,6 +288,20 @@ def main() -> None:
             if choice in ("c", "continue"):
                 state = _run_until_interrupt(compiled, config, None)
                 break
+            elif choice in ("v", "view"):
+                if requirements:
+                    print(f"\n┌{'─' * 58}┐")
+                    print(f"│ {'REQUIREMENTS':^56} │")
+                    print(f"└{'─' * 58}┘")
+                    print(requirements)
+                if system_design:
+                    print(f"\n┌{'─' * 58}┐")
+                    print(f"│ {'SYSTEM DESIGN (ERD)':^56} │")
+                    print(f"└{'─' * 58}┘")
+                    print(system_design)
+                print(f"\n{'─' * 60}")
+                print("  [c] Continue  [f] Feedback  [q] Quit")
+                print(f"{'─' * 60}")
             elif choice in ("f", "feedback"):
                 feedback = input("Your feedback:\n> ").strip()
                 if feedback:
@@ -277,7 +315,7 @@ def main() -> None:
                 print("Stopped by user.")
                 return
             else:
-                print("Invalid choice. Try c, f, or q.")
+                print("Invalid choice. Try c, f, v, or q.")
 
     print("\n" + "=" * 60)
     print(f"Orchestration complete: {slug}")
